@@ -60,10 +60,10 @@
 		<user pwd="$1$wYJUgpM5$RXMMeASDc035eX.NbYWFl0" home="/root" name="root"/>
 	</users>
         <repository type="yast2">
-                <source path="http://schnell.suse.de/SLE11/SLES-11-SP2-GM/x86_64/DVD1/"/>
+          <source path="http://schnell.suse.de/SLE11/SLES-11-SP2-GM/#{arch}/DVD1/"/>
         </repository>
         <repository type="yast2">
-                <source path="http://schnell.suse.de/SLE11/SLE-11-SP2-SDK-GM/x86_64/DVD1/"/>
+          <source path="http://schnell.suse.de/SLE11/SLE-11-SP2-SDK-GM/#{arch}/DVD1/"/>
         </repository>
 	<packages type="image">
 		<package name="bootsplash-branding-SLES" bootinclude="true" bootdelete="true"/>
@@ -80,7 +80,6 @@
 	<packages type="image" profiles="xenFlavour">
 		<package name="kernel-xen" replaces="kernel-default"/>
 		<package name="xen-tools" replaces=""/>
-		<package name="xen" replaces=""/>
 	</packages>
 	<packages type="image" profiles="vmxFlavour">
 		<package name="kernel-default" replaces="kernel-xen"/>
