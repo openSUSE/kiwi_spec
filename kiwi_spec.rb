@@ -24,7 +24,7 @@ feature "Build image" do
     `#{SSH} mkdir #{dirname}`
     `scp ./config.xml root@#{config['server']}:#{dirname}/config.xml`
     `scp -r ./root root@#{config['server']}:#{dirname}/`
-    image_type_to_test= ['xen','vmx', 'oem']
+    image_type_to_test= ['pxe', 'xen','vmx', 'oem']
     image_type_to_test.each do |type|
       scenario "Building #{type}", build:true do
         if type == 'xen' 
