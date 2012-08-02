@@ -24,7 +24,8 @@ feature "Build image" do
     `#{SSH} mkdir #{dirname}`
     `scp ./config.xml root@#{config['server']}:#{dirname}/config.xml`
     `scp -r ./root root@#{config['server']}:#{dirname}/`
-    image_type_to_test= ['pxe', 'xen','vmx', 'oem']
+    image_type_to_test= ['oem', 'vmx', 'xen', 'pxe']
+    lvm_capable = ['oem', 'vmx']
     image_type_to_test.each do |type|
       scenario "Building #{type}", build:true do
         if type == 'xen' 
@@ -34,8 +35,14 @@ feature "Build image" do
           flavour = 'vmxFlavour'
           build_type = type
         end
-        puts `#{SSH} "cd #{dirname} && #{linux32} /usr/sbin/kiwi -b . -d test#{type}build --type #{build_type} --add-profile #{flavour} --logfile test#{type}.log -y"`
+        build_command = "#{SSH} \"cd #{dirname} && #{linux32} /usr/sbin/kiwi -b . --type #{build_type} --add-profile #{flavour} --logfile test#{type}.log -y\""
+        `#{build_command} -d test#{type}build`
         $?.exitstatus.should be == 0
+        if lvm_capable.include? type
+          puts 'Building LVM enabled version...'
+          `#{build_command}  -d test#{type}buildlvm --lvm`
+          $?.exitstatus.should be == 0
+        end
       end
       to_testdrive = ['oem', 'vmx']
       if to_testdrive.include? type 
@@ -54,6 +61,9 @@ feature "Build image" do
           ssh_to_appliance = "ssh  -o \"UserKnownHostsFile /dev/null\" -q -o StrictHostKeyChecking=no root@#{config['server']} -p 5555"
           expected_result = "i | @System    | SUSE_SLES     | SUSE Linux Enterprise Server 11 SP2 | 11.2-1.234 | #{arch} | No     " #fix to yes, clarify baseproduct abscense
           `#{ssh_to_appliance} zypper products`[/\n(.*)\n$/,1].should == expected_result
+          #check for mtab / proc/mounts sync, https://bugzilla.novell.com/show_bug.cgi?id=755915#c57 
+          `#{ssh_to_appliance} diff /etc/mtab /proc/mounts`
+          $?.exitstatus.should be == 0
           #touch /dev/shm to check later if appliance was actually rebooted
           `#{ssh_to_appliance} touch /dev/shm/kiwitest` 
           $?.exitstatus.should be == 0
