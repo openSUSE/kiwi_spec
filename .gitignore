@@ -2,3 +2,5 @@ config.xml
 kiwi.yml
 Gemfile.lock
 results/
+bundle/
+.bundle/
