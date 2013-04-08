@@ -1,4 +1,9 @@
-#!/usr/bin/env ruby
+begin
+  require './bundle/bundler/setup.rb'
+rescue LoadError
+  STDERR.puts "run 'bundle install --standalone'"
+  Kernel.exit 1
+end
 
 require 'yaml'
 require 'capybara/rspec'
