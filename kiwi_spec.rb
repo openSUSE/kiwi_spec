@@ -6,7 +6,6 @@ rescue LoadError
 end
 
 require 'yaml'
-require 'capybara/rspec'
 require './rstuk'
 
 config = YAML::load File.read('./cfg/kiwi.yml')
@@ -14,7 +13,7 @@ config = YAML::load File.read('./cfg/kiwi.yml')
 SERVER = config['server']
 PORT = config['port']
 
-feature "Build image" do
+describe "Build image" do
   context "Build preparation" do
     dirname = "/tmp/kiwi-#{Time.now.strftime("%Y-%m-%d-%H--%M--%S")}"
     arch = Shell.remote SERVER, 22, "uname -p"
@@ -34,7 +33,7 @@ feature "Build image" do
     image_type_to_test= ['oem', 'vmx', 'xen', 'pxe']
     lvm_capable = ['oem', 'vmx']
     image_type_to_test.each do |type|
-      scenario "Building #{type}", build:true do
+      it "Building #{type}", build:true do
         if type == 'xen' 
           flavour = 'xenFlavour'
           build_type = 'vmx'
@@ -51,7 +50,7 @@ feature "Build image" do
       end
       to_testdrive = ['oem', 'vmx']
       if to_testdrive.include? type 
-        scenario "Testdrive #{type}, reboot, check if it survived", testdrive:true do
+        it "Testdrive #{type}, reboot, check if it survived", testdrive:true do
           if type == 'vmx'
             image_extension = 'vmdk'
           elsif type == 'oem'
