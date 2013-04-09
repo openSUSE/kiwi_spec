@@ -15,10 +15,11 @@ Instructions
 A valid authorized\_keys file should be placed in
 `root/root/.ssh/authorized_keys`.
 
-Then, copy the cfg/\*.sample files by removing the .sample suffix,
+Then, copy the `cfg/*.sample` files by removing the .sample suffix,
 and edit them accordingly. You should have the following files present:
 * `cfg/config.xml.template`
 * `cfg/kiwi.yml`
+
 Finally, replace `#{arch}` placeholder with the desired value in config.xml.template.
 
 ### Run ###
