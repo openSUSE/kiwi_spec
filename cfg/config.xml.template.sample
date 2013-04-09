@@ -2,8 +2,8 @@
 
 <image schemaversion="5.2" name="LimeJeOS-SLES11SP2">
     <description type="system">
-        <author>Yury Tsarev</author>
-        <contact>ytsarev@suse.com</contact>
+        <author>NAME</author>
+        <contact>email@example.com</contact>
         <specification>
             SLES11 SP2 JeOS, is a small text based image which
             allows editing of files as well as upgrading to a full
@@ -70,10 +70,10 @@
         <user pwd="$1$wYJUgpM5$RXMMeASDc035eX.NbYWFl0" home="/root" name="root"/>
     </users>
     <repository type="yast2">
-        <source path="http://schnell.suse.de/SLE11/SLES-11-SP2-GM/#{arch}/DVD1/"/>
+        <source path="https://nu.novell.com/repo/$RCE/SLES11-SP1-Pool/sle-11-#{arch}?credentials=NCCcredentials"/>
     </repository>
     <repository type="yast2">
-        <source path="http://schnell.suse.de/SLE11/SLE-11-SP2-SDK-GM/#{arch}/DVD1/"/>
+        <source path="https://nu.novell.com/repo/$RCE/SLE11-SDK-SP1-Pool/sle-11-#{arch}?credentials=NCCcredentials"/>
     </repository>
     <packages type="image">
         <package name="bootsplash-branding-SLES" bootinclude="true" bootdelete="true"/>
