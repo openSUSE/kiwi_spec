@@ -8,7 +8,7 @@ end
 require 'yaml'
 require 'capybara/rspec'
 
-config = YAML::load File.read(File.join('.', 'kiwi.yml'))
+config = YAML::load File.read(File.join('.', 'cfg/kiwi.yml'))
 
 SSH = "ssh root@#{config['server']}"
 
@@ -24,10 +24,11 @@ feature "Build image" do
     elsif arch == 'x86_64'
       repoarch = arch
     end
-    config_xml = File.read(File.join('.', 'config.xml.template'))
-    File.open(File.join('.', 'config.xml'), 'w') {|file| file.puts config_xml.gsub('#{arch}', repoarch)}
+    config_xml_path = File.join('.', 'cfg/config.xml')
+    config_xml = File.read(config_xml_path)
+    File.open(config_xml_path, 'w') {|file| file.puts config_xml.gsub('#{arch}', repoarch)}
     `#{SSH} mkdir #{dirname}`
-    `scp ./config.xml root@#{config['server']}:#{dirname}/config.xml`
+    `scp #{config_xml_path} root@#{config['server']}:#{dirname}/config.xml`
     `scp -r ./root root@#{config['server']}:#{dirname}/`
     image_type_to_test= ['oem', 'vmx', 'xen', 'pxe']
     lvm_capable = ['oem', 'vmx']
