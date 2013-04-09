@@ -4,3 +4,5 @@ Gemfile.lock
 results/
 bundle/
 .bundle/
+cfg/config.xml.template
+cfg/kiwi.yml
