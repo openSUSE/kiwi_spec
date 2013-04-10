@@ -6,7 +6,7 @@ rescue LoadError
 end
 
 require 'yaml'
-require './rstuk'
+require 'rstuk'
 
 config = YAML::load File.read('./cfg/kiwi.yml')
 
