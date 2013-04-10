@@ -63,7 +63,7 @@ describe "Build image" do
           sleep 90
           ssh_to_appliance = "ssh  -o \"UserKnownHostsFile /dev/null\" -q -o StrictHostKeyChecking=no root@#{config['server']} -p 5555"
           actual_result = Shell.remote(SERVER, 5555, "zypper products")[/\n(.*)\n$/,1]
-          expected_result = "i | @System    | SUSE_SLES     | SUSE Linux Enterprise Server 11 SP2 | 11.2-1.234 | #{arch} | No     " #fix to yes, clarify baseproduct abscense
+          expected_result = "i | @System    | SUSE_SLES     | SUSE Linux Enterprise Server 11 SP2 | 11.2-1.513 | #{arch} | No     " #fix to yes, clarify baseproduct abscense
           actual_result.should == expected_result
           #check for mtab / proc/mounts sync, https://bugzilla.novell.com/show_bug.cgi?id=755915#c57 
           Shell.remote SERVER, 5555, "diff /etc/mtab /proc/mounts"
