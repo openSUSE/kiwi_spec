@@ -1,1 +1,4 @@
--fd -c -fh -o results/output.html
+-fd -c -fh
+-o ./results/output.html
+-r rstuk/formatters/fuu.rb
+-f RstukFuu
