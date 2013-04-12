@@ -12,10 +12,12 @@ config = YAML::load File.read('./cfg/kiwi.yml')
 
 SERVER = config['server']
 PORT = config['port']
+TESTDIR = config['testdir']
+PIGZ = config['pigz']
 
 class TestApp
   def initialize server
-    @dirname = "/tmp/kiwi-#{Time.now.strftime("%Y-%m-%d-%H--%M--%S")}"
+    @dirname = "#{TESTDIR}/kiwi-#{Time.now.strftime("%Y-%m-%d-%H--%M--%S")}"
     @arch = Shell.remote SERVER, 22, "uname -p"
     @arch = @arch.chomp
     @linux32 = ''
@@ -40,11 +42,12 @@ class TestApp
       flavour = 'vmxFlavour'
       build_type = type
     end
-    build_command = "cd #{@dirname} && #{@linux32} /usr/sbin/kiwi -b . --type #{build_type} --add-profile #{flavour} --logfile test#{type}.log -y"
-    Shell.remote SERVER, PORT, "#{build_command} -d test#{type}build"
+    pigz = "--gzip-cmd pigz" if PIGZ
+    build_command = "cd #{@dirname} && #{@linux32} /usr/sbin/kiwi -b . --type #{build_type} --add-profile #{flavour} -y #{pigz}"
+    Shell.remote SERVER, PORT, "#{build_command} --logfile test#{type}.log -d test#{type}build"
     if self.lvm_capable.include? type
       puts 'Building LVM enabled version...'
-      Shell.remote SERVER, PORT, "#{build_command}  -d test#{type}buildlvm --lvm"
+      Shell.remote SERVER, PORT, "#{build_command} --logfile test#{type}lvm.log -d test#{type}buildlvm --lvm"
     end
   end
 
@@ -59,22 +62,39 @@ class TestApp
       build_dir = "test#{type}build"
     end
     opts = defaults.merge opts
-    self.start type, build_dir
+    start type, build_dir
     sleep 90 # replace with ssh_accessible? from rstuk
-    self.app_tests
-    self.stop type
+    app_tests
+    stop type
   end
+
+  def lvm_capable
+    ['oem', 'vmx', 'xen']
+  end
+
+  def stop type
+    Shell.remote SERVER, PORT, "screen -S test#{type} -X quit"
+  end
+
+  private
 
   def start type, build_dir
     if type == 'vmx'
       image_extension = 'vmdk'
     elsif type == 'oem'
       image_extension = 'raw'
-      Shell.remote SERVER, PORT, "qemu-img create -b #{@dirname}/#{build_dir}/LimeJeOS-SLES11SP2.#{@arch}-1.12.1.#{image_extension} #{@dirname}/test#{type}build/LimeJeOS-SLES11SP2.#{@arch}-1.12.1.qcow2 20G -f qcow2"
+      Shell.remote SERVER, PORT, "qemu-img create -b #{@dirname}/#{build_dir}/LimeJeOS-SLES11SP2.#{@arch}-1.12.1.#{image_extension} #{@dirname}/#{build_dir}/LimeJeOS-SLES11SP2.#{@arch}-1.12.1.qcow2 20G -f qcow2"
       image_extension = 'qcow2'
+    elsif type == 'iso'
+      image_extension = 'iso'
     end
     image_file = "#{@dirname}/#{build_dir}/LimeJeOS-SLES11SP2.#{@arch}-1.12.1.#{image_extension}"
-    Shell.remote SERVER, PORT, "screen -S 'test#{type}' -d -m qemu-kvm -vnc :19 -drive file=#{image_file},boot=on,if=virtio -net nic -net user,hostfwd=tcp::5555-:22"
+    if type == 'iso'
+      drive = "-cdrom #{image_file}"
+    else
+      drive = "-drive file=#{image_file},boot=on,if=virtio"
+    end
+    Shell.remote SERVER, PORT, "screen -S 'test#{type}' -d -m qemu-kvm #{drive} -vnc :19 -net nic -net user,hostfwd=tcp::5555-:22"
   end
 
   def app_tests
@@ -92,14 +112,6 @@ class TestApp
     actual_result.should == expected_result
   end
 
-  def lvm_capable
-    ['oem', 'vmx']
-  end
-
-  def stop type
-    Shell.remote SERVER, PORT, "screen -S test#{type} -X quit"
-  end
-
 end
 
 describe "Build image" do
@@ -108,12 +120,12 @@ describe "Build image" do
   end
     
   context "Build preparation" do
-    image_type_to_test= ['oem', 'vmx', 'xen', 'pxe']
+    image_type_to_test= ['oem', 'vmx', 'xen', 'iso', 'pxe']
     image_type_to_test.each do |type|
       it "Building #{type}", build:true do
         @app.build type
       end
-      to_testdrive = ['oem', 'vmx']
+      to_testdrive = ['oem', 'vmx', 'iso']
       if to_testdrive.include? type 
         it "Testdrive #{type}, reboot, check if it survived", testdrive:true do
           @app.testdrive type

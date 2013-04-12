@@ -1,2 +1,4 @@
-server: example.com
-port: 22
+server: example.com # kvm capable server
+port: 22 # ssh port
+testdir: /kiwi # place where to build test images
+pigz: false # use this to speed up build process if pigz available on the server
