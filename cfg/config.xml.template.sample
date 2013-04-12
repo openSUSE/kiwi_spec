@@ -69,11 +69,29 @@
     <users group="root">
         <user pwd="$1$wYJUgpM5$RXMMeASDc035eX.NbYWFl0" home="/root" name="root"/>
     </users>
-    <repository type="yast2">
-        <source path="https://nu.novell.com/repo/$RCE/SLES11-SP1-Pool/sle-11-#{arch}?credentials=NCCcredentials"/>
+    <repository type="rpm-md">
+      <source path="https://nu.novell.com/repo/$RCE/SLES11-SP2-Core/sle-11-#{arch}?credentials=NCCcredentials"/>
     </repository>
-    <repository type="yast2">
-        <source path="https://nu.novell.com/repo/$RCE/SLE11-SDK-SP1-Pool/sle-11-#{arch}?credentials=NCCcredentials"/>
+    <repository type="rpm-md">
+      <source path="https://nu.novell.com/repo/$RCE/SLES11-SP2-Updates/sle-11-#{arch}?credentials=NCCcredentials"/>
+    </repository>
+    <repository type="rpm-md">
+      <source path="https://nu.novell.com/repo/$RCE/SLES11-SP1-Pool/sle-11-#{arch}?credentials=NCCcredentials"/>
+    </repository>
+    <repository type="rpm-md">
+      <source path="https://nu.novell.com/repo/$RCE/SLES11-SP1-Updates/sle-11-#{arch}?credentials=NCCcredentials"/>
+    </repository>
+    <repository type="rpm-md" priority="110">
+      <source path="https://nu.novell.com/repo/$RCE/SLE11-SDK-SP1-Pool/sle-11-#{arch}?credentials=NCCcredentials"/>
+    </repository>
+    <repository type="rpm-md" priority="110">
+      <source path="https://nu.novell.com/repo/$RCE/SLE11-SDK-SP1-Updates/sle-11-#{arch}?credentials=NCCcredentials"/>
+    </repository>
+    <repository type="rpm-md" priority="110">
+      <source path="https://nu.novell.com/repo/$RCE/SLE11-SDK-SP2-Core/sle-11-#{arch}?credentials=NCCcredentials"/>
+    </repository>
+    <repository type="rpm-md" priority="110">
+      <source path="https://nu.novell.com/repo/$RCE/SLE11-SDK-SP2-Updates/sle-11-#{arch}?credentials=NCCcredentials"/>
     </repository>
     <packages type="image">
         <package name="bootsplash-branding-SLES" bootinclude="true" bootdelete="true"/>
