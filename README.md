@@ -24,7 +24,7 @@ and edit them accordingly. You should have the following files present:
 Instead, you should use `#{arch}` as placeholder. kiwi\_spec will detect the server architecture.  
 Example:
 ```xml
-<repository type="yast2">
+<repository type="rpm-md">
     <source path="https://nu.novell.com/repo/$RCE/SLES11-SP1-Pool/sle-11-#{arch}?credentials=NCCcredentials"/>
 </repository>
 ```
