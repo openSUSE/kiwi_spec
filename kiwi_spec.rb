@@ -24,7 +24,7 @@ class TestApp
     if ['i386', 'i586', 'i686'].include?(@arch)
       repoarch = 'i386'
       @linux32 = 'linux32'
-    elsif @arch == 'x86_64'
+    else
       repoarch = @arch
     end
     config_xml = File.read './cfg/config.xml.template'
