@@ -16,6 +16,9 @@ TESTDIR = config['testdir']
 PIGZ = config['pigz']
 
 class TestApp
+
+  attr_accessor :red
+
   def initialize server
     @dirname = "#{TESTDIR}/kiwi-#{Time.now.strftime("%Y-%m-%d-%H--%M--%S")}"
     @arch = Shell.remote SERVER, 22, "uname -p"
@@ -61,11 +64,15 @@ class TestApp
     else
       build_dir = "test#{type}build"
     end
-    opts = defaults.merge opts
+    begin
     start type, build_dir
     sleep 90 # replace with ssh_accessible? from rstuk
     app_tests
     stop type
+    rescue => ex #stop kvm even if app_tests failed 
+      stop type
+      fail ex
+    end
   end
 
   def lvm_capable
@@ -73,7 +80,15 @@ class TestApp
   end
 
   def stop type
-    Shell.remote SERVER, PORT, "screen -S test#{type} -X quit"
+    # screen -ls always returns 1 for some reason
+    screenlist = Shell.remote(SERVER, PORT, "screen -ls", 1)
+    if screenlist.include? "test#{type}"
+      Shell.remote SERVER, PORT, "screen -S 'test#{type}' -X quit"
+    end
+  end
+  
+  def cleanup
+    Shell.remote SERVER, PORT, "rm -rf '#{@dirname}'"
   end
 
   private
@@ -114,23 +129,29 @@ class TestApp
 
 end
 
-describe "Build image" do
+describe "Build and testdrive" do
   before :all do
     @app = TestApp.new SERVER
   end
+
+  after :all do
+    @app.cleanup unless @app.red
+  end
+
+  after :each do
+    @app.red = true if example.exception
+  end
     
-  context "Build preparation" do
-    image_type_to_test= ['oem', 'vmx', 'xen', 'iso', 'pxe']
-    image_type_to_test.each do |type|
-      it "Building #{type}", build:true do
-        @app.build type
-      end
+  image_type_to_test= ['oem', 'vmx', 'xen', 'iso', 'pxe']
+  image_type_to_test.each do |type|
+    it "Test #{type}" do
+      puts "Build #{type}"
+      @app.build type
       to_testdrive = ['oem', 'vmx', 'iso']
       if to_testdrive.include? type 
-        it "Testdrive #{type}, reboot, check if it survived", testdrive:true do
-          @app.testdrive type
-          @app.testdrive type, lvm: true if @app.lvm_capable.include? type
-        end
+        puts "Testdrive #{type}, reboot, check if it survived"
+        @app.testdrive type
+        @app.testdrive type, lvm: true if @app.lvm_capable.include? type
       end
     end
   end
