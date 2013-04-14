@@ -6,80 +6,152 @@ rescue LoadError
 end
 
 require 'yaml'
-require 'capybara/rspec'
+require 'rstuk'
 
-config = YAML::load File.read(File.join('.', 'kiwi.yml'))
+config = YAML::load File.read('./cfg/kiwi.yml')
 
-SSH = "ssh root@#{config['server']}"
+SERVER = config['server']
+PORT = config['port']
+TESTDIR = config['testdir']
+PIGZ = config['pigz']
 
-feature "Build image" do
-  context "Build preparation" do
-    dirname = "/tmp/kiwi-#{Time.now.strftime("%Y-%m-%d-%H--%M--%S")}"
-    arch = `#{SSH} uname -p`.chomp
-#    dirname = '/tmp/kiwi-2012-06-24-13--05--46'
-    linux32 = ''
-    if ['i386', 'i586', 'i686'].include?(arch)
+class TestApp
+
+  attr_accessor :red
+
+  def initialize server
+    @dirname = "#{TESTDIR}/kiwi-#{Time.now.strftime("%Y-%m-%d-%H--%M--%S")}"
+    @arch = Shell.remote SERVER, 22, "uname -p"
+    @arch = @arch.chomp
+    @linux32 = ''
+    if ['i386', 'i586', 'i686'].include?(@arch)
       repoarch = 'i386'
-      linux32 = 'linux32'
+      @linux32 = 'linux32'
     else
-      repoarch = arch
+      repoarch = @arch
     end
-    config_xml = File.read(File.join('.', 'config.xml.template'))
-    File.open(File.join('.', 'config.xml'), 'w') {|file| file.puts config_xml.gsub('#{arch}', repoarch)}
-    `#{SSH} mkdir #{dirname}`
-    `scp ./config.xml root@#{config['server']}:#{dirname}/config.xml`
-    `scp -r ./root root@#{config['server']}:#{dirname}/`
-    image_type_to_test= ['oem', 'vmx', 'xen', 'pxe']
-    lvm_capable = ['oem', 'vmx']
-    image_type_to_test.each do |type|
-      scenario "Building #{type}", build:true do
-        if type == 'xen' 
-          flavour = 'xenFlavour'
-          build_type = 'vmx'
-        else
-          flavour = 'vmxFlavour'
-          build_type = type
-        end
-        build_command = "#{SSH} \"cd #{dirname} && #{linux32} /usr/sbin/kiwi -b . --type #{build_type} --add-profile #{flavour} --logfile test#{type}.log -y\""
-        `#{build_command} -d test#{type}build`
-        $?.exitstatus.should be == 0
-        if lvm_capable.include? type
-          puts 'Building LVM enabled version...'
-          `#{build_command}  -d test#{type}buildlvm --lvm`
-          $?.exitstatus.should be == 0
-        end
-      end
-      to_testdrive = ['oem', 'vmx']
+    config_xml = File.read './cfg/config.xml.template'
+    File.open('./config.xml', 'w') {|file| file.puts config_xml.gsub('#{arch}', repoarch)}
+    Shell.remote SERVER, PORT, "mkdir #{@dirname}"
+    Shell.scp "./config.xml", SERVER, PORT, "#{@dirname}/config.xml"
+    Shell.scp "./root", SERVER, PORT, @dirname
+  end
+
+  def build type
+    if type == 'xen' 
+      flavour = 'xenFlavour'
+      build_type = 'vmx'
+    else
+      flavour = 'vmxFlavour'
+      build_type = type
+    end
+    pigz = "--gzip-cmd pigz" if PIGZ
+    build_command = "cd #{@dirname} && #{@linux32} /usr/sbin/kiwi -b . --type #{build_type} --add-profile #{flavour} -y #{pigz}"
+    Shell.remote SERVER, PORT, "#{build_command} --logfile test#{type}.log -d test#{type}build"
+    if self.lvm_capable.include? type
+      puts 'Building LVM enabled version...'
+      Shell.remote SERVER, PORT, "#{build_command} --logfile test#{type}lvm.log -d test#{type}buildlvm --lvm"
+    end
+  end
+
+  def testdrive type, opts={}
+    defaults = {
+      lvm: false
+    }
+    opts = defaults.merge opts
+    if opts[:lvm]
+      build_dir = "test#{type}buildlvm"
+    else
+      build_dir = "test#{type}build"
+    end
+    begin
+    start type, build_dir
+    sleep 90 # replace with ssh_accessible? from rstuk
+    app_tests
+    stop type
+    rescue => ex #stop kvm even if app_tests failed 
+      stop type
+      fail ex
+    end
+  end
+
+  def lvm_capable
+    ['oem', 'vmx', 'xen']
+  end
+
+  def stop type
+    # screen -ls always returns 1 for some reason
+    screenlist = Shell.remote(SERVER, PORT, "screen -ls", 1)
+    if screenlist.include? "test#{type}"
+      Shell.remote SERVER, PORT, "screen -S 'test#{type}' -X quit"
+    end
+  end
+  
+  def cleanup
+    Shell.remote SERVER, PORT, "rm -rf '#{@dirname}'"
+  end
+
+  private
+
+  def start type, build_dir
+    if type == 'vmx'
+      image_extension = 'vmdk'
+    elsif type == 'oem'
+      image_extension = 'raw'
+      Shell.remote SERVER, PORT, "qemu-img create -b #{@dirname}/#{build_dir}/LimeJeOS-SLES11SP2.#{@arch}-1.12.1.#{image_extension} #{@dirname}/#{build_dir}/LimeJeOS-SLES11SP2.#{@arch}-1.12.1.qcow2 20G -f qcow2"
+      image_extension = 'qcow2'
+    elsif type == 'iso'
+      image_extension = 'iso'
+    end
+    image_file = "#{@dirname}/#{build_dir}/LimeJeOS-SLES11SP2.#{@arch}-1.12.1.#{image_extension}"
+    if type == 'iso'
+      drive = "-cdrom #{image_file}"
+    else
+      drive = "-drive file=#{image_file},boot=on,if=virtio"
+    end
+    Shell.remote SERVER, PORT, "screen -S 'test#{type}' -d -m qemu-kvm #{drive} -vnc :19 -net nic -net user,hostfwd=tcp::5555-:22"
+  end
+
+  def app_tests
+    actual_result = Shell.remote(SERVER, 5555, "zypper products")[/\n(.*)\n$/,1]
+    expected_result = "i | @System    | SUSE_SLES     | SUSE Linux Enterprise Server 11 SP2 | 11.2-1.513 | #{@arch} | No     " #fix to yes, clarify baseproduct abscense
+    actual_result.should == expected_result
+    #check for mtab / proc/mounts sync, https://bugzilla.novell.com/show_bug.cgi?id=755915#c57 
+    Shell.remote SERVER, 5555, "diff /etc/mtab /proc/mounts"
+    #touch /dev/shm to check later if appliance was actually rebooted
+    Shell.remote SERVER, 5555, "touch /dev/shm/kiwitest"
+    Shell.remote SERVER, 5555, "reboot"
+    sleep 60
+    Shell.remote SERVER, 5555, "test -f /dev/shm/kiwitest", 1
+    actual_result = Shell.remote(SERVER, 5555, "zypper products")[/\n(.*)\n$/,1]
+    actual_result.should == expected_result
+  end
+
+end
+
+describe "Build and testdrive" do
+  before :all do
+    @app = TestApp.new SERVER
+  end
+
+  after :all do
+    @app.cleanup unless @app.red
+  end
+
+  after :each do
+    @app.red = true if example.exception
+  end
+    
+  image_type_to_test= ['oem', 'vmx', 'xen', 'iso', 'pxe']
+  image_type_to_test.each do |type|
+    it "Test #{type}" do
+      puts "Build #{type}"
+      @app.build type
+      to_testdrive = ['oem', 'vmx', 'iso']
       if to_testdrive.include? type 
-        scenario "Testdrive #{type}, reboot, check if it survived", testdrive:true do
-          if type == 'vmx'
-            image_extension = 'vmdk'
-          elsif type == 'oem'
-            image_extension = 'raw'
-            `#{SSH} qemu-img create -b #{dirname}/test#{type}build/LimeJeOS-SLES11SP2.#{arch}-1.12.1.#{image_extension} #{dirname}/test#{type}build/LimeJeOS-SLES11SP2.#{arch}-1.12.1.qcow2 20G -f qcow2`
-            image_extension = 'qcow2'
-          end
-          image_file = "#{dirname}/test#{type}build/LimeJeOS-SLES11SP2.#{arch}-1.12.1.#{image_extension}"
-          puts `#{SSH} screen -S 'test#{type}' -d -m qemu-kvm -vnc :19 -drive file=#{image_file},boot=on,if=virtio -net nic -net user,hostfwd=tcp::5555-:22`
-          $?.exitstatus.should be == 0
-          sleep 90
-          ssh_to_appliance = "ssh  -o \"UserKnownHostsFile /dev/null\" -q -o StrictHostKeyChecking=no root@#{config['server']} -p 5555"
-          expected_result = "i | @System    | SUSE_SLES     | SUSE Linux Enterprise Server 11 SP2 | 11.2-1.234 | #{arch} | No     " #fix to yes, clarify baseproduct abscense
-          `#{ssh_to_appliance} zypper products`[/\n(.*)\n$/,1].should == expected_result
-          #check for mtab / proc/mounts sync, https://bugzilla.novell.com/show_bug.cgi?id=755915#c57 
-          `#{ssh_to_appliance} diff /etc/mtab /proc/mounts`
-          $?.exitstatus.should be == 0
-          #touch /dev/shm to check later if appliance was actually rebooted
-          `#{ssh_to_appliance} touch /dev/shm/kiwitest` 
-          $?.exitstatus.should be == 0
-          `#{ssh_to_appliance} reboot`
-          sleep 60
-          `#{ssh_to_appliance} test -f /dev/shm/kiwitest`
-          $?.exitstatus.should be == 1
-          `#{ssh_to_appliance} zypper products`[/\n(.*)\n$/,1].should == expected_result
-          `#{SSH} screen -S test#{type} -X quit`
-          $?.exitstatus.should be == 0
-        end
+        puts "Testdrive #{type}, reboot, check if it survived"
+        @app.testdrive type
+        @app.testdrive type, lvm: true if @app.lvm_capable.include? type
       end
     end
   end

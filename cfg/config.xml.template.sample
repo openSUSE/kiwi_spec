@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<image schemaversion="5.2" name="LimeJeOS-SLES11SP2">
+    <description type="system">
+        <author>NAME</author>
+        <contact>email@example.com</contact>
+        <specification>
+            SLES11 SP2 JeOS, is a small text based image which
+            allows editing of files as well as upgrading to a full
+            distro by using zypper with the pre-defined repository
+        </specification>
+    </description>
+    <profiles>
+        <profile name="xenFlavour" description="VMX with Xen kernel"/>
+        <profile name="vmxFlavour" description="VMX with default kernel" import="true"/>
+    </profiles>
+    <preferences>
+        <type image="iso" primary="true" boot="isoboot/suse-SLES11" hybrid="true"/>
+        <version>1.12.1</version>
+        <packagemanager>zypper</packagemanager>
+        <locale>en_US</locale>
+        <keytable>us.map.gz</keytable>
+        <timezone>Europe/Berlin</timezone>
+        <hwclock>utc</hwclock>
+        <rpm-excludedocs>true</rpm-excludedocs>
+        <boot-theme>SLES</boot-theme>
+    </preferences>
+    <preferences profiles="xenFlavour">
+        <type image="vmx" filesystem="ext3" boot="vmxboot/suse-SLES11" bootprofile="xen" bootkernel="xenk">
+            <machine memory="512" domain="domU">
+                <vmdisk controller="ide" id="0" device="/dev/xvda"/>
+                <vmnic interface=""/>
+            </machine>
+        </type>
+        <type image="oem" filesystem="ext3" boot="oemboot/suse-SLES11" bootprofile="xen" bootkernel="xenk" installiso="true">
+            <oemconfig>
+                <oem-systemsize>2048</oem-systemsize>
+            </oemconfig>
+            <machine domain="dom0"/>
+        </type>
+    </preferences>
+    <preferences profiles="vmxFlavour">
+        <type image="vmx" filesystem="ext3" boot="vmxboot/suse-SLES11" format="vmdk">
+            <machine memory="512" guestOS="suse" HWversion="4">
+                <vmdisk controller="scsi" id="0"/>
+                <vmnic driver="e1000" interface="0" mode="bridged"/>
+            </machine>
+        </type>
+        <type image="oem" filesystem="ext3" boot="oemboot/suse-SLES11" installiso="true">
+            <oemconfig>
+                <oem-systemsize>2048</oem-systemsize>
+            </oemconfig>
+            <machine memory="512" guestOS="suse" HWversion="4">
+                <vmdisk controller="scsi" id="0"/>
+                <vmnic driver="e1000" interface="0" mode="bridged"/>
+            </machine>
+        </type>
+        <type image="pxe" filesystem="ext3" boot="netboot/suse-SLES11">
+            <pxedeploy server="192.168.100.2" blocksize="4096">
+                <partitions device="/dev/sda">
+                        <partition type="swap" number="1" size="5"/>
+                        <partition type="L" number="2" size="image" mountpoint="/" target="true"/>
+                        <partition type="L" number="3" target="false"/>
+                </partitions>
+                <union ro="/dev/sda2" rw="/dev/sda3" type="clicfs"/>
+            </pxedeploy>
+        </type>
+    </preferences>
+    <users group="root">
+        <user pwd="$1$wYJUgpM5$RXMMeASDc035eX.NbYWFl0" home="/root" name="root"/>
+    </users>
+    <repository type="rpm-md">
+      <source path="https://nu.novell.com/repo/$RCE/SLES11-SP2-Core/sle-11-#{arch}?credentials=NCCcredentials"/>
+    </repository>
+    <repository type="rpm-md">
+      <source path="https://nu.novell.com/repo/$RCE/SLES11-SP2-Updates/sle-11-#{arch}?credentials=NCCcredentials"/>
+    </repository>
+    <repository type="rpm-md">
+      <source path="https://nu.novell.com/repo/$RCE/SLES11-SP1-Pool/sle-11-#{arch}?credentials=NCCcredentials"/>
+    </repository>
+    <repository type="rpm-md">
+      <source path="https://nu.novell.com/repo/$RCE/SLES11-SP1-Updates/sle-11-#{arch}?credentials=NCCcredentials"/>
+    </repository>
+    <repository type="rpm-md" priority="110">
+      <source path="https://nu.novell.com/repo/$RCE/SLE11-SDK-SP1-Pool/sle-11-#{arch}?credentials=NCCcredentials"/>
+    </repository>
+    <repository type="rpm-md" priority="110">
+      <source path="https://nu.novell.com/repo/$RCE/SLE11-SDK-SP1-Updates/sle-11-#{arch}?credentials=NCCcredentials"/>
+    </repository>
+    <repository type="rpm-md" priority="110">
+      <source path="https://nu.novell.com/repo/$RCE/SLE11-SDK-SP2-Core/sle-11-#{arch}?credentials=NCCcredentials"/>
+    </repository>
+    <repository type="rpm-md" priority="110">
+      <source path="https://nu.novell.com/repo/$RCE/SLE11-SDK-SP2-Updates/sle-11-#{arch}?credentials=NCCcredentials"/>
+    </repository>
+    <packages type="image">
+        <package name="bootsplash-branding-SLES" bootinclude="true" bootdelete="true"/>
+        <package name="gfxboot-branding-SLES" bootinclude="true" bootdelete="true"/>
+        <package name="ifplugd"/>
+        <package name="iputils"/>
+        <package name="vim"/>
+        <package name="grub"/>
+        <package name="syslinux"/>
+        <package name="kexec-tools"/>
+        <opensusePattern name="base"/>
+        <opensuseProduct name="SUSE_SLES"/>
+    </packages>
+    <packages type="image" profiles="xenFlavour">
+        <package name="kernel-xen" replaces="kernel-default"/>
+        <package name="xen-tools" replaces=""/>
+    </packages>
+    <packages type="image" profiles="vmxFlavour">
+        <package name="kernel-default" replaces="kernel-xen"/>
+        <package name="kernel-default" replaces="xen-tools"/>
+        <package name="kernel-default" replaces="xen"/>
+    </packages>
+    <packages type="bootstrap">
+        <package name="filesystem"/>
+        <package name="glibc-locale"/>
+        <package name="cracklib-dict-full"/>
+    </packages>
+</image>
