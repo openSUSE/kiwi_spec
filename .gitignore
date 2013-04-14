@@ -1,9 +1,9 @@
 config.xml
-kiwi.yml
 Gemfile.lock
 results/
 bundle/
 .bundle/
 cfg/config.xml.template
 cfg/kiwi.yml
+cfg/config.sh
 *.sw*
