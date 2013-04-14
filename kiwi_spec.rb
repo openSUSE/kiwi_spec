@@ -34,6 +34,7 @@ class TestApp
     File.open('./config.xml', 'w') {|file| file.puts config_xml.gsub('#{arch}', repoarch)}
     Shell.remote SERVER, PORT, "mkdir #{@dirname}"
     Shell.scp "./config.xml", SERVER, PORT, "#{@dirname}/config.xml"
+    Shell.scp "./cfg/config.sh", SERVER, PORT, @dirname
     Shell.scp "./root", SERVER, PORT, @dirname
   end
 
@@ -114,7 +115,7 @@ class TestApp
 
   def app_tests
     actual_result = Shell.remote(SERVER, 5555, "zypper products")[/\n(.*)\n$/,1]
-    expected_result = "i | @System    | SUSE_SLES     | SUSE Linux Enterprise Server 11 SP2 | 11.2-1.513 | #{@arch} | No     " #fix to yes, clarify baseproduct abscense
+    expected_result = "i | @System    | SUSE_SLES     | SUSE Linux Enterprise Server 11 SP2 | 11.2-1.513 | #{@arch} | Yes    "
     actual_result.should == expected_result
     #check for mtab / proc/mounts sync, https://bugzilla.novell.com/show_bug.cgi?id=755915#c57 
     Shell.remote SERVER, 5555, "diff /etc/mtab /proc/mounts"

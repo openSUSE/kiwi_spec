@@ -1,4 +1,4 @@
 -fd -c -fh
--o ./results/output.html
+-o ./results/kiwi_spec_run_<%= Time.now.strftime("%Y-%m-%d-%H:%M:%S") %>.html
 -r rstuk/formatters/rstukfuu.rb
 -f RstukFuu
