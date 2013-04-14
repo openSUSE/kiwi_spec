@@ -18,6 +18,7 @@ A valid authorized\_keys file should be placed in
 Then, copy the `cfg/*.sample` files by removing the .sample suffix,
 and edit them accordingly. You should have the following files present:
 * `cfg/config.xml.template`
+* `cfg/config.sh`
 * `cfg/kiwi.yml`
 
 **IMPORTANT:** Do _NOT_ use hardcoded value for the architecture when specifying repositories in config.xml.template.
