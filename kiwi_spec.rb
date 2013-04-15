@@ -16,6 +16,7 @@ TESTDIR = config['testdir']
 PIGZ = config['pigz']
 VNC_PORT = config['appliance_vnc_port']
 APP_PORT = config['appliance_ssh_port']
+IMAGES = config['images_to_test']
 
 # Reopen Shell class to handle localhost/remote cases
 class Shell
@@ -168,7 +169,7 @@ describe "Build and testdrive" do
     @app.red = true if example.exception
   end
     
-  image_type_to_test= ['oem', 'vmx', 'xen', 'iso', 'pxe']
+  image_type_to_test = IMAGES
   image_type_to_test.each do |type|
     it "Test #{type}" do
       puts "Build #{type}"

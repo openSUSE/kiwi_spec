@@ -4,3 +4,4 @@ testdir: /kiwi # place where to build test images
 pigz: false # use this to speed up build process if pigz available on the server
 appliance_vnc_port: 20 # vnc port to access to appliance
 appliance_ssh_port: 5555 # ssh port for appliance access
+images_to_test: [oem, vmx, xen, iso, pxe] # specify image types you want to test
