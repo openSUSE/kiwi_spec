@@ -2,3 +2,5 @@ server: example.com # kvm capable server
 port: 22 # ssh port
 testdir: /kiwi # place where to build test images
 pigz: false # use this to speed up build process if pigz available on the server
+appliance_vnc_port: 20 # vnc port to access to appliance
+appliance_ssh_port: 5555 # ssh port for appliance access

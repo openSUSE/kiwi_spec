@@ -14,6 +14,8 @@ SERVER = config['server']
 PORT = config['port']
 TESTDIR = config['testdir']
 PIGZ = config['pigz']
+VNC_PORT = config['appliance_vnc_port']
+APP_PORT = config['appliance_ssh_port']
 
 class TestApp
 
@@ -110,21 +112,21 @@ class TestApp
     else
       drive = "-drive file=#{image_file},boot=on,if=virtio"
     end
-    Shell.remote SERVER, PORT, "screen -S 'test#{type}' -d -m qemu-kvm #{drive} -vnc :19 -net nic -net user,hostfwd=tcp::5555-:22"
+    Shell.remote SERVER, PORT, "screen -S 'test#{type}' -d -m qemu-kvm #{drive} -vnc :#{VNC_PORT} -net nic -net user,hostfwd=tcp::#{APP_PORT}-:22"
   end
 
   def app_tests
-    actual_result = Shell.remote(SERVER, 5555, "zypper products")[/\n(.*)\n$/,1]
+    actual_result = Shell.remote(SERVER, APP_PORT, "zypper products")[/\n(.*)\n$/,1]
     expected_result = "i | @System    | SUSE_SLES     | SUSE Linux Enterprise Server 11 SP2 | 11.2-1.513 | #{@arch} | Yes    "
     actual_result.should == expected_result
     #check for mtab / proc/mounts sync, https://bugzilla.novell.com/show_bug.cgi?id=755915#c57 
-    Shell.remote SERVER, 5555, "diff /etc/mtab /proc/mounts"
+    Shell.remote SERVER, APP_PORT, "diff /etc/mtab /proc/mounts"
     #touch /dev/shm to check later if appliance was actually rebooted
-    Shell.remote SERVER, 5555, "touch /dev/shm/kiwitest"
-    Shell.remote SERVER, 5555, "reboot"
+    Shell.remote SERVER, APP_PORT, "touch /dev/shm/kiwitest"
+    Shell.remote SERVER, APP_PORT, "reboot"
     sleep 60
-    Shell.remote SERVER, 5555, "test -f /dev/shm/kiwitest", 1
-    actual_result = Shell.remote(SERVER, 5555, "zypper products")[/\n(.*)\n$/,1]
+    Shell.remote SERVER, APP_PORT, "test -f /dev/shm/kiwitest", 1
+    actual_result = Shell.remote(SERVER, APP_PORT, "zypper products")[/\n(.*)\n$/,1]
     actual_result.should == expected_result
   end
 
