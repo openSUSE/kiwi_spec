@@ -21,8 +21,10 @@ and edit them accordingly. You should have the following files present:
 * `cfg/config.sh`
 * `cfg/kiwi.yml`
 
-**IMPORTANT:** Do _NOT_ use hardcoded value for the architecture when specifying repositories in config.xml.template.
-Instead, you should use `#{arch}` as placeholder. kiwi\_spec will detect the server architecture.  
+**IMPORTANT:** If you want to test kiwi on different architectures you can replace relevant part of repository link with #{arch}
+placeholder in config.xml.template. This way kiwi\_spec will detect the server architecture automatically and build final repository
+link for you. 
+If you want to test the kiwi only on one architecture, keep the links as usual.
 
 Example below provides valid repository layout for SLES 11 SP2:
 ```xml
