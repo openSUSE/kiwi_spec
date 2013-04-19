@@ -46,7 +46,7 @@ class TestApp
 
   attr_accessor :red
 
-  def initialize(server)
+  def initialize
     @dirname = "#{TESTDIR}/kiwi-#{Time.now.strftime("%Y-%m-%d-%H--%M--%S")}"
     @arch = Shell.buildhost 'uname -p'
     @arch = @arch.chomp
