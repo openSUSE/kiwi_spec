@@ -161,7 +161,7 @@ end
 
 describe 'Build and testdrive' do
   before :all do
-    @app = TestApp.new SERVER
+    @app = TestApp.new
   end
 
   after :all do
