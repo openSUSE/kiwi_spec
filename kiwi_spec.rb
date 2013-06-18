@@ -18,6 +18,7 @@ PIGZ = config['pigz']
 VNC_PORT = config['appliance_vnc_port']
 APP_PORT = config['appliance_ssh_port']
 IMAGES = config['images_to_test']
+SSH_TIMEOUT = config['ssh_timeout']
 
 # Reopen Shell class to handle localhost/remote cases
 class Shell
@@ -25,12 +26,17 @@ class Shell
     if SERVER == 'localhost'
       Shell.local cmd, exit_status
     else
-      Shell.remote SERVER, PORT, cmd, exit_status
+      Shell.remote SERVER, PORT, cmd, {
+        exit_code: exit_status
+      }
     end
   end
 
   def self.appliance(cmd, exit_status = 0)
-    Shell.remote SERVER, APP_PORT, cmd, exit_status
+    Shell.remote SERVER, APP_PORT, cmd, {
+      exit_code: exit_status,
+      timeout: SSH_TIMEOUT
+    }
   end
 
   def self.cp(src, dst)
@@ -96,7 +102,6 @@ class TestApp
     end
     begin
     start type, build_dir
-    sleep 90 # replace with ssh_accessible? from rstuk
     app_tests
     stop type
     rescue => ex #stop kvm even if app_tests failed
