@@ -8,6 +8,6 @@ bootstrap:
 	$(BUNDLE) install --standalone
 
 kiwi_spec:
-	$(RSPEC) kiwi_spec.rb
+	$(BUNDLE) exec $(RSPEC) kiwi_spec.rb
 
 .PHONY: bootstrap kiwi_spec
