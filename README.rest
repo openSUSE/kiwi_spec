@@ -1,0 +1,70 @@
+.. vim: ft=rst ts=8 sts=2 sw=2 et tw=72
+.. default-role:: literal
+
+========================================================================
+                               kiwi_spec
+========================================================================
+------------------------------------------------------------------------
+                 KIWI acceptance testing based on RSpec
+------------------------------------------------------------------------
+
+Installation
+============
+
+`make bootstrap` command will install all the required dependencies.
+
+Configuration
+=============
+
+A valid authorized_keys file should be placed in
+`root/root/.ssh/authorized_keys`.
+
+Then, copy the `cfg/*.sample` files by removing the .sample suffix,
+and edit them accordingly. You should have the following files present:
+
+* `cfg/config.xml.template`
+* `cfg/config.sh`
+* `cfg/kiwi.yml`
+
+.. IMPORTANT::
+  If you want to test kiwi on different architectures you can replace
+  relevant part of repository link with `#{arch}` placeholder in
+  `config.xml.template`. This way kiwi_spec will detect the server
+  architecture automatically and build final repository link for you.
+  If you want to test the kiwi only on one architecture, keep the links
+  as usual.
+
+Example below provides valid repository layout for SLES 11 SP2: ::
+
+  <repository type="rpm-md">
+    <source path="https://nu.novell.com/repo/$RCE/SLES11-SP2-Core/sle-11-#{arch}?credentials=NCCcredentials"/>
+  </repository>
+  <repository type="rpm-md">
+    <source path="https://nu.novell.com/repo/$RCE/SLES11-SP2-Updates/sle-11-#{arch}?credentials=NCCcredentials"/>
+  </repository>
+  <repository type="rpm-md">
+    <source path="https://nu.novell.com/repo/$RCE/SLES11-SP1-Pool/sle-11-#{arch}?credentials=NCCcredentials"/>
+  </repository>
+  <repository type="rpm-md">
+    <source path="https://nu.novell.com/repo/$RCE/SLES11-SP1-Updates/sle-11-#{arch}?credentials=NCCcredentials"/>
+  </repository>
+  <repository type="rpm-md" priority="110">
+    <source path="https://nu.novell.com/repo/$RCE/SLE11-SDK-SP1-Pool/sle-11-#{arch}?credentials=NCCcredentials"/>
+  </repository>
+  <repository type="rpm-md" priority="110">
+    <source path="https://nu.novell.com/repo/$RCE/SLE11-SDK-SP1-Updates/sle-11-#{arch}?credentials=NCCcredentials"/>
+  </repository>
+  <repository type="rpm-md" priority="110">
+    <source path="https://nu.novell.com/repo/$RCE/SLE11-SDK-SP2-Core/sle-11-#{arch}?credentials=NCCcredentials"/>
+  </repository>
+  <repository type="rpm-md" priority="110">
+    <source path="https://nu.novell.com/repo/$RCE/SLE11-SDK-SP2-Updates/sle-11-#{arch}?credentials=NCCcredentials"/>
+  </repository>
+
+Also notice priority of 110 on SDK repositories. It is important for
+11-SP2 appliances.
+
+Operation
+=========
+
+`make kiwi_spec` will run the RSpec tests.
