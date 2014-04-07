@@ -8,8 +8,31 @@
                  KIWI acceptance testing based on RSpec
 ------------------------------------------------------------------------
 
+**kiwi_spec** is a remote testing tool for SUSE packages of `kiwi`_.
+*kiwi_spec* drives *kiwi* on another host through ssh(1), and tests
+the created image using *qemu-kvm*.  This arrangement means
+*kiwi_spec*'s implementation need not be compatible with the OS
+version targetted by any specific *kiwi* package (*kiwi_spec* is written
+in ruby, and used to test *kiwi* packages for all supported SUSE
+versions, which means a really wide span of ruby(gems) versions.
+
+.. _kiwi: http://opensuse.github.io/kiwi/
+
 Installation
 ============
+
+::
+
+  git clone https://github.com/openSUSE/kiwi_spec.git
+  cd kiwi_spec
+  make bootstrap
+  for f in cfg/*sample; do cp $f ${f%.sample}; done
+  # edit files in cfg/
+  make kiwi_spec
+
+**kiwi_spec** expects to be run from a machine with bundler >= 1.1
+(for the `--standalone` option); it's been used on various openSUSE
+versions.
 
 `make bootstrap` command will install all the required dependencies.
 
